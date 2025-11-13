@@ -1,0 +1,72 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>cvilnoiussmr.ro</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <header>
+        <h1>Spital - Proiect PHP</h1>
+        <h3>Vilnoiu Carol-Ioan, Grupa 241</h3>
+    </header>
+
+    <div class="container">
+
+        <div class="section">
+            <h5>1. Descriere - ce face site-ul si baza de date</h5>
+            <p>Platforma informatica a spitalului gestioneaza activitatile clinice si administrative.
+                Aplicatia web ofera interfete pe roluri (medic, receptie, administrator, pacient)
+                pentru programari, internari, fise medicale, comenzi laborator/imagistica, prescriptii, stocuri si
+                facturare.</p>
+            <p>Baza de date relationala stocheaza in siguranta datele pacientilor, episoadele clinice, investigatiile si
+                rezultatele,
+                precum si documentele financiar-contabile.</p>
+            <p><b>Securitate:</b> autentificare, roluri/permisiuni (RBAC).</p>
+        </div>
+
+        <div class="section">
+            <h5>2. Tipuri de utilizatori si roluri</h5>
+
+            <div class="role">
+                <h5>Administrator</h5>
+                <p>Gestioneaza utilizatori, roluri si permisiuni. Configureaza departamente si integrari.</p>
+            </div>
+
+            <div class="role">
+                <h5>Medic</h5>
+                <p>Are acces la pacientii proprii sau ai sectiei; vizualizeaza istoricul, notele si rezultatele.</p>
+                <p>Emite comenzi catre laborator sau imagistica, redacteaza rapoarte si prescrie tratamente.</p>
+                <p>Completeaza scrisoarea medicala la externare.</p>
+            </div>
+
+            <div class="role">
+                <h5>Pacient</h5>
+                <p>Vizualizeaza programari, rezultate validate, documente si facturi.
+                    Poate plati online si gestiona consimtamantul GDPR.</p>
+            </div>
+
+            <div class="role">
+                <h5>Receptionista</h5>
+                <p>Creeaza si gestioneaza programari (calendar medici/sectii).
+                    Inregistreaza pacienti noi si actualizeaza datele de contact.</p>
+                <p>Initiaza internarea sau externarea administrativa si emite bonuri ori facturi de avans.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h5>3. Diagrame si tabele</h5>
+            <img src="DiagramaERD.png" alt="Diagrama ERD">
+            <img src="TabelPHP.png" alt="Tabel PHP">
+            <img src="DiagramaUML.png" alt="Diagrama UML">
+        </div>
+
+    </div>
+
+    <footer>
+        &copy; 2025 - Proiect universitar Spital PHP, Vilnoiu Carol-Ioan
+    </footer>
+</body>
+
+</html>
