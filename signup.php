@@ -1,68 +1,66 @@
 <?php
 session_start();
 include 'db.php';
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 
 $message = "";
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name = trim($_POST['name']);
+    $name = trim($_POST['full_name']);
     $email = trim($_POST['email']);
-    $password = trim($_POST['password']);
+    $pass = $_POST['password'];
+    $captcha_input = $_POST['captcha_input'];
 
-    if (empty($name) || empty($email) || empty($password)) {
-        $message = "❌ All fields are required!";
-    } else {
-        $check = $conn->prepare("SELECT id FROM patients WHERE email=?");
-        $check->bind_param("s", $email);
-        $check->execute();
-        $check->store_result();
+    if ($captcha_input !== $_SESSION['captcha_code']) {
+        $message = "❌ Codul de securitate este incorect!";
+    } 
+    else {
+        $checkEmail = $conn->prepare("SELECT email FROM patients WHERE email = ? UNION SELECT email FROM doctors WHERE email = ?");
+        $checkEmail->bind_param("ss", $email, $email);
+        $checkEmail->execute();
+        $result = $checkEmail->get_result();
 
-        if ($check->num_rows > 0) {
-            $message = "⚠️ Email already registered!";
+        if ($result->num_rows > 0) {
+            $message = "❌ Acest email este deja utilizat de alt cont!";
         } else {
-            $hashedPassword = password_hash($password, PASSWORD_BCRYPT);
+            $hashed_pass = password_hash($pass, PASSWORD_BCRYPT);
             $stmt = $conn->prepare("INSERT INTO patients (full_name, email, password) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $name, $email, $hashedPassword);
+            $stmt->bind_param("sss", $name, $email, $hashed_pass);
+
             if ($stmt->execute()) {
-                $message = "✅ Account created successfully! You can now log in.";
+                $message = "✅ Cont creat cu succes! Te poți loga.";
             } else {
-                $message = "❌ Database error: " . $stmt->error;
+                $message = "❌ Eroare la baza de date.";
             }
-            $stmt->close();
         }
-        $check->close();
     }
 }
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Patient Sign Up</title>
-    <style>
-        body { font-family: Arial; background: #f4f6f9; margin: 40px; color: #333; }
-        form { background: white; padding: 25px; border-radius: 10px; width: 350px; margin: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        input, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; }
-        button { background: #007bff; color: white; border: none; cursor: pointer; }
-        button:hover { background: #0056b3; }
-        .msg { margin-bottom: 10px; padding: 10px; border-radius: 5px; background: #e9ecef; }
-        a { display: block; text-align: center; margin-top: 15px; text-decoration: none; color: #007bff; }
-    </style>
+    <title>Înregistrare Pacient</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="container">
+    <form method="POST" class="section" style="max-width: 400px; margin: auto;">
+        <h2>Creare Cont Pacient</h2>
+        <?php if($message) echo "<p style='color:red;'>$message</p>"; ?>
 
-<form action="signup.php" method="POST">
-    <h2>Create Account</h2>
-    <?php if ($message): ?><div class="msg"><?= $message ?></div><?php endif; ?>
-    <input type="text" name="name" placeholder="Full Name" required>
-    <input type="email" name="email" placeholder="Email Address" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <button type="submit">Sign Up</button>
-    <a href="login.php">Already have an account? Log in</a>
-</form>
+        <input type="text" name="full_name" placeholder="Nume Complet" required style="width:100%; padding:10px; margin-bottom:10px;">
+        <input type="email" name="email" placeholder="Email" required style="width:100%; padding:10px; margin-bottom:10px;">
+        <input type="password" name="password" placeholder="Parolă" required style="width:100%; padding:10px; margin-bottom:15px;">
 
+        <div style="margin-bottom: 15px; background: #eee; padding: 10px; border-radius: 5px;">
+            <label>Cod de securitate:</label><br>
+            <img src="captcha.php" style="margin: 5px 0; border: 1px solid #ccc;">
+            <input type="text" name="captcha_input" placeholder="Introdu codul de sus" required style="width:100%; padding:8px;">
+        </div>
+
+        <button type="submit" style="width:100%; padding:10px; background:#004d66; color:white; border:none; cursor:pointer;">Înregistrare</button>
+        <p><a href="login.php">Ai deja cont? Loghează-te</a></p>
+    </form>
+</div>
 </body>
 </html>

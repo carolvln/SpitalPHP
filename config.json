@@ -1,0 +1,12 @@
+{
+  "ftp": {
+    "host": "lv-shared02.dapanel.net",
+    "port": 21,
+    "username": "hospitalsync@cvilnoiu.daw.ssmr.ro",
+    "password": "hospital123",
+    "remotePath": "/"
+  },
+  "local": {
+    "folder": "C:/xampp/htdocs/hospital"
+  }
+}

@@ -1,37 +1,35 @@
 <?php
 session_start();
-if (!isset($_SESSION['id'])) {
+if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'patient') {
     header("Location: login.php");
     exit();
 }
-
-$name = $_SESSION['name'];
 ?>
-
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Home - Patient Portal</title>
-    <style>
-        body { font-family: Arial, sans-serif; background: #f4f6f9; margin: 40px; color: #333; text-align: center; }
-        .card { background: #fff; padding: 30px; border-radius: 10px; width: 400px; margin: auto; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        h2 { color: #007bff; }
-        a { display: inline-block; margin-top: 15px; padding: 10px 20px; border-radius: 5px; text-decoration: none; background: #007bff; color: white; }
-        a:hover { background: #0056b3; }
-        .logout { background: #dc3545; margin-left: 10px; }
-        .logout:hover { background: #b02a37; }
-    </style>
+    <title>Portal Pacient</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<header>
+    <h1>Bun venit, <?= htmlspecialchars($_SESSION['name']) ?></h1>
+    <nav><a href="logout.php" style="color:white;">Deconectare</a></nav>
+</header>
+<div class="container" style="display: flex; gap: 20px; justify-content: center; margin-top: 50px;">
+    
+    <div class="section" style="flex: 1; text-align: center;">
+        <h3>Programare Nouă</h3>
+        <p>Ai nevoie de o consultație? Alege medicul și data dorită.</p>
+        <a href="make_appointment.php" class="btn-save" style="display:inline-block; padding:15px 25px; background:#0099cc; color:white; text-decoration:none; border-radius:5px; font-weight:bold;">SOLICITĂ PROGRAMARE</a>
+    </div>
 
-<div class="card">
-    <h2>Welcome, <?= htmlspecialchars($name) ?> 👋</h2>
-    <p>You are logged in to the hospital appointment system.</p>
+    <div class="section" style="flex: 1; text-align: center; border-left-color: #28a745;">
+        <h3>Istoric & Recomandări</h3>
+        <p>Vezi programările tale și notele trimise de medici.</p>
+        <a href="my_appointments.php" style="display:inline-block; padding:15px 25px; background:#28a745; color:white; text-decoration:none; border-radius:5px; font-weight:bold;">VEZI ISTORICUL MEU</a>
+    </div>
 
-    <a href="appointment.php">📅 View / Book Appointments</a>
-    <a href="logout.php" class="logout">🚪 Log Out</a>
 </div>
-
 </body>
 </html>

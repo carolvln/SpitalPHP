@@ -1,151 +1,92 @@
 <?php
 session_start();
-$message = "";
-if (isset($_SESSION['message'])) {
-    $message = $_SESSION['message'];
-    unset($_SESSION['message']);
-}
-
-error_reporting(E_ALL);
-ini_set('display_errors', 1);
 include 'db.php';
 
-if (!isset($_SESSION['id'])) {
+// 1. Generăm token-ul CSRF dacă nu există deja
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'patient') {
     header("Location: login.php");
     exit();
 }
 
-$patient_id = $_SESSION['id'];
 $message = "";
 
+// 2. Verificăm formularul la trimitere
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['book'])) {
+    
+    // VERIFICARE CSRF - Aceasta este partea care dădea eroare
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die("Eroare: Validare CSRF eșuată. Încearcă să dai refresh la pagină.");
+    }
+
+    $patient_id = $_SESSION['id'];
+    $doctor_id = $_POST['doctor_id'];
     $date = $_POST['date'];
     $time = $_POST['time'];
     $reason = trim($_POST['reason']);
-    $today = date("Y-m-d");
+    $history = trim($_POST['medical_history']); // Istoric medical obligatoriu
 
-    if ($date < $today) {
-        $_SESSION['message'] = "You cannot book appointments in the past.";
+    if ($date < date("Y-m-d")) {
+        $message = "❌ Nu poți face programări în trecut.";
     } else {
-        $query = "INSERT INTO appointments (patient_id, appointment_date, appointment_time, reason) VALUES (?, ?, ?, ?)";
-        $stmt = $conn->prepare($query);
-        if (!$stmt) {
-            die("SQL prepare() failed: " . $conn->error);
-        }
-        $stmt->bind_param("isss", $patient_id, $date, $time, $reason);
+        $stmt = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, reason, medical_history, status) VALUES (?, ?, ?, ?, ?, ?, 'Scheduled')");
+        $stmt->bind_param("iissss", $patient_id, $doctor_id, $date, $time, $reason, $history);
+        
         if ($stmt->execute()) {
-            $_SESSION['message'] = "Appointment booked successfully!";
+            $message = "✅ Programare creată cu succes!";
         } else {
-            $_SESSION['message'] = "Database error: " . $stmt->error;
+            $message = "❌ Eroare la salvare: " . $conn->error;
         }
-        $stmt->close();
-    }
-
-    header("Location: appointment.php");
-    exit();
-}
-
-
-if (isset($_GET['cancel'])) {
-    $app_id = intval($_GET['cancel']);
-    $cancel_query = "UPDATE appointments SET status='Cancelled' WHERE id=? AND patient_id=?";
-    $cancel_stmt = $conn->prepare($cancel_query);
-    if ($cancel_stmt) {
-        $cancel_stmt->bind_param("ii", $app_id, $patient_id);
-        $cancel_stmt->execute();
-        $cancel_stmt->close();
-        $_SESSION['message'] = "Appointment cancelled.";
-        header("Location: appointment.php");
-        exit();
     }
 }
 
-
-$query = "SELECT * FROM appointments WHERE patient_id=? ORDER BY appointment_date DESC, appointment_time DESC";
-$stmt = $conn->prepare($query);
-if (!$stmt) {
-    die("SQL prepare() failed while loading appointments: " . $conn->error);
-}
-$stmt->bind_param("i", $patient_id);
-$stmt->execute();
-$result = $stmt->get_result();
+// Luăm lista de medici pentru meniul drop-down
+$doctors = $conn->query("SELECT id, full_name, specialization FROM doctors WHERE status='Approved'");
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Your Appointments</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f9f9f9; color: #333; margin: 30px; }
-        h1 { color: #0066cc; }
-        form { margin-bottom: 30px; background: #fff; padding: 20px; border-radius: 10px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); width: 400px; }
-        input, textarea, button { width: 100%; padding: 10px; margin-top: 10px; border-radius: 5px; border: 1px solid #ccc; }
-        table { border-collapse: collapse; width: 100%; margin-top: 20px; background: #fff; border-radius: 10px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
-        th, td { padding: 12px; border-bottom: 1px solid #eee; text-align: center; }
-        th { background-color: #007bff; color: white; }
-        .msg { padding: 10px; border-radius: 5px; margin-bottom: 10px; }
-        .success { background: #d4edda; color: #155724; }
-        .error { background: #f8d7da; color: #721c24; }
-        .cancel { background: #ffeeba; color: #856404; }
-        a.cancel-link { color: red; text-decoration: none; }
-        a.cancel-link:hover { text-decoration: underline; }
-    </style>
+    <title>Programare Nouă</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
+<div class="container">
+    <div class="section">
+        <h2>Solicită o Consultație</h2>
+        <?php if($message) echo "<p>$message</p>"; ?>
 
-<h1>Book an Appointment</h1>
+        <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
 
-<?php if ($message): ?>
-    <div class="msg <?= strpos($message, 'successfully') !== false ? 'success' : (strpos($message, 'cancelled') !== false ? 'cancel' : 'error') ?>">
-        <?= htmlspecialchars($message) ?>
+            <label>Medic:</label>
+            <select name="doctor_id" required style="width:100%; padding:10px; margin-bottom:15px;">
+                <?php while($d = $doctors->fetch_assoc()): ?>
+                    <option value="<?= $d['id'] ?>">Dr. <?= $d['full_name'] ?> (<?= $d['specialization'] ?>)</option>
+                <?php endwhile; ?>
+            </select>
+
+            <label>Data și Ora:</label>
+            <div style="display:flex; gap:10px; margin-bottom:15px;">
+                <input type="date" name="date" required style="flex:1; padding:10px;">
+                <input type="time" name="time" required style="flex:1; padding:10px;">
+            </div>
+
+            <label>Motivul vizitei:</label>
+            <textarea name="reason" placeholder="Descrie simptomele..." style="width:100%; padding:10px; margin-bottom:15px;"></textarea>
+
+            <label><b>Istoric Medical (Important pentru medic):</b></label>
+            <textarea name="medical_history" placeholder="Alergii, boli cronice, medicamente actuale..." required style="width:100%; height:100px; padding:10px; border: 2px solid #004d66;"></textarea>
+
+            <button type="submit" name="book" style="width:100%; padding:12px; background:#0099cc; color:white; border:none; border-radius:5px; cursor:pointer;">
+                Confirmă Programarea
+            </button>
+        </form>
+        <p><a href="home.php">Înapoi la Panoul Principal</a></p>
     </div>
-<?php endif; ?>
-
-<form action="appointment.php" method="POST">
-    <label>Date:</label>
-    <input type="date" name="date" required min="<?= date('Y-m-d'); ?>">
-
-    <label>Time (24-hour format):</label>
-    <input type="time" name="time" required>
-
-    <label>Reason:</label>
-    <textarea name="reason" placeholder="Describe your reason..."></textarea>
-
-    <button type="submit" name="book">Book Appointment</button>
-</form>
-
-<h2>Your Appointments</h2>
-
-<table>
-    <tr>
-        <th>Date</th>
-        <th>Time</th>
-        <th>Reason</th>
-        <th>Status</th>
-        <th>Action</th>
-    </tr>
-    <?php while ($row = $result->fetch_assoc()): ?>
-        <tr>
-            <td><?= htmlspecialchars($row['appointment_date']) ?></td>
-            <td><?= htmlspecialchars(substr($row['appointment_time'], 0, 5)) ?></td>
-            <td><?= htmlspecialchars($row['reason']) ?></td>
-            <td><?= htmlspecialchars($row['status']) ?></td>
-            <td>
-                <?php if ($row['status'] == 'Scheduled'): ?>
-                    <a class="cancel-link" href="appointment.php?cancel=<?= $row['id'] ?>" onclick="return confirm('Cancel this appointment?');">Cancel</a>
-                <?php else: ?>
-                    <span style="color:gray;">—</span>
-                <?php endif; ?>
-            </td>
-        </tr>
-    <?php endwhile; ?>
-</table>
-
+</div>
 </body>
 </html>
-
-<?php
-$stmt->close();
-$conn->close();
-?>
