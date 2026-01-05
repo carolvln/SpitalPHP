@@ -1,6 +1,8 @@
 <?php
 session_start();
 include 'db.php';
+require_once('class.phpmailer.php');
+require_once('class.smtp.php');
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -13,15 +15,16 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $correct_captcha = $_SESSION['captcha_code'] ?? '';
 
     if (empty($user_captcha) || $user_captcha !== $correct_captcha) {
-        $message = "❌ Codul de securitate este incorect!";
+        $message = "Codul de securitate este incorect!";
     } 
     elseif (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        $message = "❌ Eroare de sesiune (CSRF).";
+        $message = "Eroare de sesiune.";
     }
     else {
         $email = trim($_POST['email']);
         $password = $_POST['password'];
 
+        // 1. LOGIN ADMIN
         $stmt = $conn->prepare("SELECT id, username, password FROM admins WHERE username = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -34,6 +37,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
 
+        // 2. LOGIN DOCTOR
         $stmt = $conn->prepare("SELECT id, full_name, password, status FROM doctors WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
@@ -41,7 +45,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         if ($doc = $res->fetch_assoc()) {
             if (password_verify($password, $doc['password'])) {
                 if ($doc['status'] !== 'Approved') {
-                    $message = "⏳ Contul tău încă nu a fost aprobat de admin.";
+                    $message = "Contul tău încă nu a fost aprobat de admin.";
                 } else {
                     $_SESSION['id'] = $doc['id'];
                     $_SESSION['role'] = 'doctor';
@@ -51,20 +55,53 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
 
-        $stmt = $conn->prepare("SELECT id, full_name, password FROM patients WHERE email = ?");
+        // 3. LOGIN PACIENT
+        $stmt = $conn->prepare("SELECT id, full_name, password, email FROM patients WHERE email = ?");
         $stmt->bind_param("s", $email);
         $stmt->execute();
         $res = $stmt->get_result();
+        
         if ($pat = $res->fetch_assoc()) {
             if (password_verify($password, $pat['password'])) {
-                $_SESSION['id'] = $pat['id'];
-                $_SESSION['role'] = 'patient';
-                $_SESSION['name'] = $pat['full_name'];
-                header("Location: home.php"); exit();
+                
+                $code = (string)rand(100000, 999999);
+                
+                $stmt_update = $conn->prepare("UPDATE patients SET verification_code = ? WHERE id = ?");
+                $stmt_update->bind_param("si", $code, $pat['id']);
+                
+                if($stmt_update->execute()) {
+                    $mail = new PHPMailer();
+                    $mail->IsSMTP();
+                    $mail->SMTPAuth = true;
+                    $mail->SMTPSecure = "tls";
+                    $mail->Host = "mail.ptanasa.daw.ssmr.ro";
+                    $mail->Port = 587;
+                    $mail->Username = "account@ptanasa.daw.ssmr.ro";
+                    $mail->Password = "123456";
+
+                    $mail->From = "account@ptanasa.daw.ssmr.ro";
+                    $mail->FromName = "Spital PHP";
+                    $mail->AddAddress($pat['email']);
+                    $mail->Subject = "Cod de verificare - Spital PHP";
+                    $mail->Body    = "Buna ziua " . $pat['full_name'] . ", codul tau de verificare este: " . $code;
+                    $mail->CharSet = 'UTF-8';
+
+                    if(!$mail->Send()) {
+                        $_SESSION['debug_code'] = $code;
+                    }
+
+                    $_SESSION['temp_user_id'] = $pat['id'];
+                    $_SESSION['temp_user_name'] = $pat['full_name'];
+                    
+                    header("Location: verify_code.php");
+                    exit();
+                } else {
+                    $message = "Eroare interna la generarea codului.";
+                }
             }
         }
         
-        if (!$message) $message = "❌ Date incorecte.";
+        if (!$message) $message = "Date incorecte sau parola gresita.";
     }
 }
 ?>

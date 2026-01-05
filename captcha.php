@@ -29,7 +29,7 @@ for ($i = 0; $i < 8; $i++) {
 }
 
 for ($i = 0; $i < strlen($code); $i++) {
-    $char_color = imagecolorallocate($image, rand(0, 100), rand(0, 100), rand(0, 100)); // Culori închise pt text
+    $char_color = imagecolorallocate($image, rand(0, 100), rand(0, 100), rand(0, 100));
     $x = 20 + ($i * 22); 
     $y = rand(10, 25);
     

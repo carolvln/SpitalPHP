@@ -12,8 +12,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $stmt = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, reason, medical_history, status) VALUES (?, ?, ?, ?, ?, ?, 'Scheduled')");
     $stmt->bind_param("iissss", $_SESSION['id'], $_POST['doctor_id'], $_POST['date'], $_POST['time'], $_POST['reason'], $_POST['history']);
     
-    if($stmt->execute()) $msg = "✅ Programare trimisă cu succes!";
-    else $msg = "❌ Eroare la trimitere.";
+    if($stmt->execute()) $msg = "Programare trimisă cu succes!";
+    else $msg = "Eroare la trimitere.";
 }
 
 $docs = $conn->query("SELECT id, full_name, specialization FROM doctors WHERE status='Approved'");

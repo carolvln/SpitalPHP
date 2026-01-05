@@ -64,9 +64,9 @@ $stats_docs = $conn->query("
 <body>
 
 <header style="display: flex; justify-content: space-between; align-items: center; padding: 10px 5%; background: #004d66; color: white;">
-    <h2>🏥 Panel Control Spital</h2>
+    <h2>Panel Control Spital</h2>
     <nav>
-        <a href="admin_doctors.php" style="color: white; text-decoration: none; font-weight: bold; margin-right: 20px;">👨‍⚕️ Gestionare Medici</a>
+        <a href="admin_doctors.php" style="color: white; text-decoration: none; font-weight: bold; margin-right: 20px;">Gestionare Medici</a>
         <a href="logout.php" style="color: #ff4d4d; text-decoration: none; font-weight: bold;">Ieșire</a>
     </nav>
 </header>
@@ -74,16 +74,6 @@ $stats_docs = $conn->query("
 <div class="container" style="padding: 30px 5%;">
     
     <div class="stats-grid">
-        <div class="stat-card visitor-box">
-            <h3>Vizitatori Unici (Azi)</h3>
-            <div class="value"><?= $visitors_today ?></div>
-            <p>Utilizatori diferiți pe site</p>
-        </div>
-        <div class="stat-card">
-            <h3>Afișări Pagini (Azi)</h3>
-            <div class="value"><?= $hits_today ?></div>
-            <p>Total click-uri efectuate</p>
-        </div>
         <div class="stat-card">
             <h3>Pacienți Totali</h3>
             <div class="value"><?= $total_patients ?></div>
@@ -101,7 +91,7 @@ $stats_docs = $conn->query("
     
 
     <div style="background: white; padding: 25px; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.07);">
-        <h3 style="margin-bottom: 20px; color: #2c3e50; border-left: 5px solid #004d66; padding-left: 10px;">📊 Performanță Echpă Medicală</h3>
+        <h3 style="margin-bottom: 20px; color: #2c3e50; border-left: 5px solid #004d66; padding-left: 10px;">Performanță Echpă Medicală</h3>
         <table>
             <thead>
                 <tr>
@@ -132,7 +122,20 @@ $stats_docs = $conn->query("
             </tbody>
         </table>
     </div>
-
+    <div style="margin-bottom: 20px; text-align: right;">
+    <a href="export_doctors.php" style="
+        background-color: #1D6F42; 
+        color: white; 
+        padding: 10px 20px; 
+        text-decoration: none; 
+        border-radius: 5px; 
+        font-weight: bold; 
+        display: inline-flex; 
+        align-items: center;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+        <span style="margin-right: 8px;">📊</span> Descarcă Lista Medici (Excel)
+    </a>
+</div>
     <div style="margin-top: 30px; display: flex; gap: 15px;">
         <?php 
         $status_res = $conn->query("SELECT status, COUNT(*) as c FROM appointments GROUP BY status");

@@ -25,10 +25,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $stmt->bind_param("isssissi", $doctor_id, $zi, $start, $end, $is_working, $start, $end, $is_working);
         $stmt->execute();
     }
-    $message = "✅ Programul a fost actualizat cu succes!";
+    $message = "Programul a fost actualizat cu succes!";
 }
 
-// Preluare program actual
 $current_schedule = [];
 $res = $conn->query("SELECT * FROM doctor_schedule WHERE doctor_id = $doctor_id");
 while ($row = $res->fetch_assoc()) {

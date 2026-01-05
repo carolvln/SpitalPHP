@@ -2,7 +2,6 @@
 session_start();
 include 'db.php';
 
-// 1. Generăm token-ul CSRF dacă nu există deja
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
@@ -14,10 +13,8 @@ if (!isset($_SESSION['id']) || $_SESSION['role'] !== 'patient') {
 
 $message = "";
 
-// 2. Verificăm formularul la trimitere
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['book'])) {
     
-    // VERIFICARE CSRF - Aceasta este partea care dădea eroare
     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
         die("Eroare: Validare CSRF eșuată. Încearcă să dai refresh la pagină.");
     }
@@ -27,23 +24,22 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['book'])) {
     $date = $_POST['date'];
     $time = $_POST['time'];
     $reason = trim($_POST['reason']);
-    $history = trim($_POST['medical_history']); // Istoric medical obligatoriu
+    $history = trim($_POST['medical_history']);
 
     if ($date < date("Y-m-d")) {
-        $message = "❌ Nu poți face programări în trecut.";
+        $message = "Nu poți face programări în trecut.";
     } else {
         $stmt = $conn->prepare("INSERT INTO appointments (patient_id, doctor_id, appointment_date, appointment_time, reason, medical_history, status) VALUES (?, ?, ?, ?, ?, ?, 'Scheduled')");
         $stmt->bind_param("iissss", $patient_id, $doctor_id, $date, $time, $reason, $history);
         
         if ($stmt->execute()) {
-            $message = "✅ Programare creată cu succes!";
+            $message = "Programare creată cu succes!";
         } else {
-            $message = "❌ Eroare la salvare: " . $conn->error;
+            $message = "Eroare la salvare: " . $conn->error;
         }
     }
 }
 
-// Luăm lista de medici pentru meniul drop-down
 $doctors = $conn->query("SELECT id, full_name, specialization FROM doctors WHERE status='Approved'");
 ?>
 

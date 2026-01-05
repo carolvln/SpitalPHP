@@ -35,7 +35,7 @@ $res = $stmt->get_result();
         
         <hr>
         <div style="background:#f0f9ff; padding:15px; border-radius:5px; border:1px solid #bde0fe;">
-            <h5 style="margin-top:0; color:#004d66;">📋 Recomandările Medicului:</h5>
+            <h5 style="margin-top:0; color:#004d66;">Recomandările Medicului:</h5>
             <p style="font-style: italic; color:#333;">
                 <?= $row['recommendations'] ? nl2br(htmlspecialchars($row['recommendations'])) : "Așteptare consult/analize..." ?>
             </p>

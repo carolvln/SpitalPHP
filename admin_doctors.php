@@ -14,7 +14,7 @@ if (isset($_GET['approve'])) {
     $stmt = $conn->prepare("UPDATE doctors SET status = 'Approved' WHERE id = ?");
     $stmt->bind_param("i", $id);
     if ($stmt->execute()) {
-        $message = "✅ Medic aprobat cu succes!";
+        $message = "Medic aprobat cu succes!";
     }
 }
 
@@ -23,7 +23,7 @@ if (isset($_GET['deactivate'])) {
     $stmt = $conn->prepare("UPDATE doctors SET status = 'Inactive' WHERE id = ?");
     $stmt->bind_param("i", $id);
     if ($stmt->execute()) {
-        $message = "⚠️ Contul medicului a fost dezactivat.";
+        $message = "Contul medicului a fost dezactivat.";
     }
 }
 
@@ -56,7 +56,7 @@ $inactive_doctors = $conn->query("SELECT * FROM doctors WHERE status = 'Inactive
 <header>
     <h1>Gestionare Personal Medical</h1>
     <nav>
-        <a href="admin_board.php" style="color:white; margin-right:15px;">⬅️ Înapoi la Dashboard</a>
+        <a href="admin_board.php" style="color:white; margin-right:15px;">Înapoi la Dashboard</a>
         <a href="logout.php" style="color:white;">Deconectare</a>
     </nav>
 </header>
@@ -65,7 +65,7 @@ $inactive_doctors = $conn->query("SELECT * FROM doctors WHERE status = 'Inactive
     <?php if($message) echo "<p style='text-align:center; font-weight:bold; color:#004d66;'>$message</p>"; ?>
 
     <div class="section-box">
-        <h2 style="color: #856404;">⏳ Cereri de Înregistrare Noi</h2>
+        <h2 style="color: #856404;">Cereri de Înregistrare Noi</h2>
         <?php if($pending_doctors->num_rows == 0): ?>
             <p>Nu există cereri noi în acest moment.</p>
         <?php else: ?>
@@ -91,7 +91,7 @@ $inactive_doctors = $conn->query("SELECT * FROM doctors WHERE status = 'Inactive
     </div>
 
     <div class="section-box">
-        <h2 style="color: #155724;">✅ Medici Activi</h2>
+        <h2 style="color: #155724;">Medici Activi</h2>
         <table>
             <thead>
                 <tr style="background: #d4edda;">
@@ -118,7 +118,7 @@ $inactive_doctors = $conn->query("SELECT * FROM doctors WHERE status = 'Inactive
 
     <?php if($inactive_doctors->num_rows > 0): ?>
     <div class="section-box">
-        <h3 style="color: #666;">📜 Arhivă Medici Inactivi</h3>
+        <h3 style="color: #666;">Arhivă Medici Inactivi</h3>
         <table style="opacity: 0.7;">
             <?php while($row = $inactive_doctors->fetch_assoc()): ?>
             <tr>

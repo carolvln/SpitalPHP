@@ -1,37 +1,41 @@
 <?php
 session_start();
 include 'db.php';
-
-$message = "";
+require_once('class.phpmailer.php');
+require_once('class.smtp.php');
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    $name = trim($_POST['full_name']);
+    $full_name = trim($_POST['full_name']);
     $email = trim($_POST['email']);
-    $pass = $_POST['password'];
-    $captcha_input = $_POST['captcha_input'];
+    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-    if ($captcha_input !== $_SESSION['captcha_code']) {
-        $message = "❌ Codul de securitate este incorect!";
-    } 
-    else {
-        $checkEmail = $conn->prepare("SELECT email FROM patients WHERE email = ? UNION SELECT email FROM doctors WHERE email = ?");
-        $checkEmail->bind_param("ss", $email, $email);
-        $checkEmail->execute();
-        $result = $checkEmail->get_result();
+    $stmt = $conn->prepare("INSERT INTO patients (full_name, email, password) VALUES (?, ?, ?)");
+    $stmt->bind_param("sss", $full_name, $email, $password);
 
-        if ($result->num_rows > 0) {
-            $message = "❌ Acest email este deja utilizat de alt cont!";
-        } else {
-            $hashed_pass = password_hash($pass, PASSWORD_BCRYPT);
-            $stmt = $conn->prepare("INSERT INTO patients (full_name, email, password) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $name, $email, $hashed_pass);
+    if ($stmt->execute()) {
+        $mail = new PHPMailer();
+        $mail->IsSMTP();
+        $mail->SMTPAuth = true;
+        $mail->SMTPSecure = "tls";
+        $mail->Host = "mail.ptanasa.daw.ssmr.ro";
+        $mail->Port = 587;
+        $mail->Username = "account@ptanasa.daw.ssmr.ro";
+        $mail->Password = "123456";
 
-            if ($stmt->execute()) {
-                $message = "✅ Cont creat cu succes! Te poți loga.";
-            } else {
-                $message = "❌ Eroare la baza de date.";
-            }
-        }
+        $mail->From = "account@ptanasa.daw.ssmr.ro";
+        $mail->FromName = "Spital Gemini";
+        $mail->AddAddress($email);
+        
+        $mail->Subject = "Bun venit la Spital Gemini!";
+        $mail->Body    = "Buna ziua " . $full_name . ",\n\nContul tau a fost creat cu succes! Te poti autentifica acum folosind adresa de email.";
+        $mail->CharSet = 'UTF-8';
+
+        $mail->Send();
+
+        header("Location: login.php?success=1");
+        exit();
+    } else {
+        $error = "Eroare la inregistrare.";
     }
 }
 ?>

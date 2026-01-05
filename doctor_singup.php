@@ -8,7 +8,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $correct_captcha = $_SESSION['captcha_code'] ?? '';
 
     if (empty($user_captcha) || $user_captcha !== $correct_captcha) {
-        $message = "❌ Codul de securitate este incorect!";
+        $message = "Codul de securitate este incorect!";
     } else {
         $name = strip_tags(trim($_POST['name']));
         $email = filter_var(trim($_POST['email']), FILTER_SANITIZE_EMAIL);
@@ -20,14 +20,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $check->execute();
         
         if ($check->get_result()->num_rows > 0) {
-            $message = "⚠️ Email deja folosit în sistem!";
+            $message = "Email deja folosit în sistem!";
         } else {
             $stmt = $conn->prepare("INSERT INTO doctors (full_name, email, password, specialization, status) VALUES (?, ?, ?, ?, 'Pending')");
             $stmt->bind_param("ssss", $name, $email, $hashed, $spec);
             if ($stmt->execute()) {
-                $message = "✅ Cont creat! Așteaptă aprobarea unui administrator.";
+                $message = "Cont creat! Așteaptă aprobarea unui administrator.";
             } else {
-                $message = "❌ Eroare la salvarea datelor.";
+                $message = "Eroare la salvarea datelor.";
             }
         }
     }
